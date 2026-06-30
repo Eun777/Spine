@@ -1,28 +1,16 @@
-# Book Recognition MVP
+# Spine
+Spine helps you manage the 101 books you want to read. See a book you like in the book store? Were you going to just snap a photo? You are likely to lose that photo among the millions of other photos in your library. Use Spine to note down the book you are looking for instead!
 
-A mobile-first Next.js app for scanning, reviewing, and saving books.
+## Key Features
+### Search for books (Free for all users!)
+Use "Search" to find books and save them to your library to read in the future. (Powered by Open Library API)
 
-## Run locally
+### Scan books you wanna read (Paid feature)
+Lazy to type and search individually? Use this feature and scan up to 8 books at once! Use a well lit environment with clear names and Spine will see if there is a match with a book on Open Library!
 
-```bash
-npm install
-npm run dev
-```
+### Find on NLB
+You can search for the book on NLB with just one click of a button!
 
-Open http://localhost:3000.
-
-Copy `.env.example` to `.env.local` and configure:
-
-```env
-OPENAI_API_KEY=your-openai-key
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-publishable-or-anon-key
-BOOK_SCAN_ACCESS_CODE=choose-a-long-private-code
-GOOGLE_BOOKS_API_KEY=optional-google-books-key
-```
-
-Then run `supabase/schema.sql` in the Supabase SQL Editor. Email/password authentication is enabled by default in hosted Supabase projects; by default, new users must confirm their email. The shared scan code is an additional cost-control gate for OpenAI usage and should be distributed only to approved users.
-
-Recognized books are automatically enriched with cover art, publisher, publication date, page count, language, categories, description, ratings when available, and an external details link. Google Books is used when `GOOGLE_BOOKS_API_KEY` is set; otherwise the app falls back to the keyless Open Library API.
-
-Authenticated users can also use `/search` to search Open Library by title, author, or ISBN and save results without unlocking or spending AI credits.
+## Future Features
+### Track reading progress
+Track your reading progress on one platform. Track which books you have read and which ones you plan on reading next, all in one platform.
