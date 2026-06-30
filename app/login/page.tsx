@@ -1,0 +1,11 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [mode,setMode]=useState<"signin"|"signup">("signin"),[email,setEmail]=useState(""),[password,setPassword]=useState(""),[error,setError]=useState(""),[message,setMessage]=useState(""),[loading,setLoading]=useState(false);
+  async function submit(event:FormEvent){event.preventDefault();setLoading(true);setError("");setMessage("");try{const response=await fetch(`/api/auth/${mode}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});const data=await response.json();if(!response.ok)throw new Error(data.error||"Authentication failed");if(data.needsConfirmation){setMessage("Check your email to confirm your account, then sign in.");setMode("signin")}else{router.push("/");router.refresh()}}catch(e){setError(e instanceof Error?e.message:"Authentication failed")}finally{setLoading(false)}}
+  return <section className="shell auth-shell"><div className="auth-card"><p className="eyebrow">Private library</p><h1>{mode==="signin"?"Welcome back":"Create an account"}</h1><p className="lede">{mode==="signin"?"Sign in to open your collection.":"Your books stay private to your account."}</p><form className="auth-form" onSubmit={submit}><label>Email<input type="email" autoComplete="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" /></label><label>Password<input type="password" autoComplete={mode==="signin"?"current-password":"new-password"} minLength={8} required value={password} onChange={e=>setPassword(e.target.value)} placeholder="At least 8 characters" /></label>{error&&<p className="form-error" role="alert">{error}</p>}{message&&<p className="form-success" role="status">{message}</p>}<button className="primary auth-submit" disabled={loading}>{loading?"Please wait…":mode==="signin"?"Sign in":"Create account"}</button></form><button className="text-btn" onClick={()=>{setMode(mode==="signin"?"signup":"signin");setError("");setMessage("")}}>{mode==="signin"?"New here? Create an account":"Already have an account? Sign in"}</button></div></section>;
+}
