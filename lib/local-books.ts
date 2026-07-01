@@ -19,7 +19,7 @@ export function saveLocalBooks(drafts: BookDraft[]) {
         : clean(draft.title) === clean(book.title) && clean(draft.author) === clean(book.author)
     );
     if (duplicate) { skipped.push(draft); continue; }
-    added.push({ ...draft, id: crypto.randomUUID(), cover_image_url: draft.cover_image_url || null, created_at: now, updated_at: now });
+    added.push({ ...draft, status: draft.status || "wishlist", id: crypto.randomUUID(), cover_image_url: draft.cover_image_url || null, created_at: now, updated_at: now });
   }
   localStorage.setItem(KEY, JSON.stringify([...added, ...current]));
   return { added, skipped };

@@ -1,3 +1,13 @@
+export const BOOK_STATUSES = ["purchased", "reading", "read", "wishlist"] as const;
+export type BookStatus = typeof BOOK_STATUSES[number];
+
+export const BOOK_STATUS_LABELS: Record<BookStatus, string> = {
+  purchased: "Purchased",
+  reading: "Reading now",
+  read: "Read",
+  wishlist: "Wish to buy",
+};
+
 export type BookDraft = {
   title: string;
   author: string;
@@ -17,6 +27,7 @@ export type BookDraft = {
   average_rating?: number | null;
   ratings_count?: number | null;
   metadata_source?: "google_books" | "open_library" | null;
+  status?: BookStatus;
 };
 
 export type Book = BookDraft & {

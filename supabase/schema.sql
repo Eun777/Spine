@@ -22,6 +22,7 @@ create table if not exists public.books (
   average_rating double precision,
   ratings_count integer,
   metadata_source text,
+  status text not null default 'wishlist',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -39,6 +40,11 @@ alter table public.books add column if not exists preview_url text;
 alter table public.books add column if not exists average_rating double precision;
 alter table public.books add column if not exists ratings_count integer;
 alter table public.books add column if not exists metadata_source text;
+alter table public.books add column if not exists status text not null default 'wishlist';
+alter table public.books alter column status set default 'wishlist';
+update public.books set status = 'wishlist' where status is null or status = 'purchased';
+alter table public.books drop constraint if exists books_status_check;
+alter table public.books add constraint books_status_check check (status in ('purchased', 'reading', 'read', 'wishlist'));
 create index if not exists books_user_id_idx on public.books(user_id);
 
 alter table public.books enable row level security;

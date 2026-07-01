@@ -11,6 +11,5 @@ Lazy to type and search individually? Use this feature and scan up to 8 books at
 ### Find on NLB
 You can search for the book on NLB with just one click of a button!
 
-## Future Features
-### Track reading progress
-Track your reading progress on one platform. Track which books you have read and which ones you plan on reading next, all in one platform.
+### Track your collection
+Mark books as Purchased, Reading now, Read, or Wish to buy, and filter your library by status. New and unclassified books default to Wish to buy.
