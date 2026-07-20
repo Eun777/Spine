@@ -36,3 +36,8 @@ export type Book = BookDraft & {
   created_at: string;
   updated_at: string;
 };
+
+export type LibraryPreferences = {
+  title: string;
+  subtitle: string;
+};

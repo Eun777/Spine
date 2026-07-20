@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { isUuid } from "./security";
 
 export const ACCESS_COOKIE = "spine-sb-access";
 export const REFRESH_COOKIE = "spine-sb-refresh";
@@ -63,7 +64,7 @@ export async function getAuthenticatedUser(): Promise<{ user: SupabaseUser; acce
   let accessToken = jar.get(ACCESS_COOKIE)?.value;
   if (accessToken) {
     const user = await fetchUser(accessToken);
-    if (user) return { user, accessToken };
+    if (user?.id && isUuid(user.id)) return { user, accessToken };
   }
 
   const refreshToken = jar.get(REFRESH_COOKIE)?.value;
@@ -78,7 +79,7 @@ export async function getAuthenticatedUser(): Promise<{ user: SupabaseUser; acce
   const session = await refreshed.json();
   setSessionCookies(session);
   accessToken = session.access_token;
-  if (!session.user?.id || !session.access_token) return null;
+  if (!session.user?.id || !session.access_token || !isUuid(session.user.id)) return null;
   return { user: session.user, accessToken: session.access_token as string };
 }
 

@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import BookCard from "@/components/book-card";
 import EditBookModal from "@/components/edit-book-modal";
+import LibraryTitleEditor from "@/components/library-title-editor";
 import WishlistReceiptModal from "@/components/wishlist-receipt-modal";
 import { useLibraryBooks } from "@/hooks/use-library-books";
+import { useLibraryPreferences } from "@/hooks/use-library-preferences";
 import { useNlbAvailability } from "@/hooks/use-nlb-availability";
 import {
   BOOK_STATUSES,
@@ -26,6 +28,11 @@ export default function HomePage() {
     enrichBook,
     changeStatus,
   } = useLibraryBooks();
+  const {
+    preferences,
+    isSaving: isSavingPreferences,
+    savePreferences,
+  } = useLibraryPreferences(showToast);
   const [query, setQuery] = useState("");
   const [genre, setGenre] = useState(ALL_GENRES);
   const [statusFilter, setStatusFilter] = useState(ALL_STATUSES);
@@ -90,11 +97,11 @@ export default function HomePage() {
   return (
     <section className="shell">
       <div className="library-head">
-        <div>
-          <p className="eyebrow">Your personal collection</p>
-          <h1>My library</h1>
-          <p className="lede">Every shelf tells a story. Keep yours close.</p>
-        </div>
+        <LibraryTitleEditor
+          preferences={preferences}
+          isSaving={isSavingPreferences}
+          onSave={savePreferences}
+        />
         <div className="library-summary">
           {books.length > 0 && (
             <button

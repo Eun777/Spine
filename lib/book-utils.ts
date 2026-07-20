@@ -5,6 +5,7 @@ import {
   type BookDraft,
   type BookStatus,
 } from "./types";
+import { sanitizeHttpUrl, sanitizeText } from "./security";
 
 export function isBookStatus(value: unknown): value is BookStatus {
   return typeof value === "string" && BOOK_STATUSES.includes(value as BookStatus);
@@ -31,25 +32,25 @@ export function isDuplicateBook(candidate: Pick<BookDraft, "title" | "author" | 
 export function normalizeBookDraft(input: unknown): BookDraft | null {
   if (!input || typeof input !== "object") return null;
   const draft = input as Partial<BookDraft>;
-  const title = String(draft.title || "").trim();
+  const title = sanitizeText(draft.title, 220);
   if (!title) return null;
 
   return {
     title,
-    author: String(draft.author || "Unknown author").trim() || "Unknown author",
+    author: sanitizeText(draft.author, 180) || "Unknown author",
     isbn: cleanNullableString(draft.isbn),
-    genre: cleanNullableString(draft.genre),
-    cover_image_url: cleanNullableString(draft.cover_image_url),
-    confidence_score: typeof draft.confidence_score === "number" ? draft.confidence_score : null,
-    description: cleanNullableString(draft.description),
-    publisher: cleanNullableString(draft.publisher),
-    published_date: cleanNullableString(draft.published_date),
+    genre: sanitizeText(draft.genre, 120),
+    cover_image_url: sanitizeHttpUrl(draft.cover_image_url),
+    confidence_score: typeof draft.confidence_score === "number" ? clamp(draft.confidence_score, 0, 1) : null,
+    description: sanitizeText(draft.description, 1600),
+    publisher: sanitizeText(draft.publisher, 180),
+    published_date: sanitizeText(draft.published_date, 80),
     page_count: typeof draft.page_count === "number" ? draft.page_count : null,
-    categories: Array.isArray(draft.categories) ? draft.categories.filter((category): category is string => typeof category === "string").slice(0, 12) : null,
-    language: cleanNullableString(draft.language),
-    google_books_id: cleanNullableString(draft.google_books_id),
-    open_library_id: cleanNullableString(draft.open_library_id),
-    preview_url: cleanNullableString(draft.preview_url),
+    categories: Array.isArray(draft.categories) ? draft.categories.map((category) => sanitizeText(category, 80)).filter((category): category is string => Boolean(category)).slice(0, 12) : null,
+    language: sanitizeText(draft.language, 20),
+    google_books_id: sanitizeText(draft.google_books_id, 120),
+    open_library_id: sanitizeText(draft.open_library_id, 120),
+    preview_url: sanitizeHttpUrl(draft.preview_url),
     average_rating: typeof draft.average_rating === "number" ? draft.average_rating : null,
     ratings_count: typeof draft.ratings_count === "number" ? draft.ratings_count : null,
     metadata_source: draft.metadata_source === "google_books" || draft.metadata_source === "open_library" ? draft.metadata_source : null,
@@ -82,4 +83,8 @@ function cleanNullableString(value: unknown) {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed || null;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }

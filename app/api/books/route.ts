@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError, readJson, readSupabaseError } from "@/lib/api-response";
 import { isDuplicateBook, normalizeBookDraft } from "@/lib/book-utils";
+import { supabaseEqFilter } from "@/lib/security";
 import { getAuthenticatedUser, getSupabaseConfig, supabaseHeaders } from "@/lib/supabase-server";
 
 export async function GET() {
@@ -10,7 +11,8 @@ export async function GET() {
   const session = await getAuthenticatedUser();
   if (!session) return apiError("Your session has expired. Please sign in again.", { status: 401 });
 
-  const response = await fetch(`${url}/rest/v1/books?select=*&user_id=eq.${session.user.id}&order=created_at.desc`, {
+  const userFilter = supabaseEqFilter(session.user.id);
+  const response = await fetch(`${url}/rest/v1/books?select=*&user_id=${userFilter}&order=created_at.desc`, {
     headers: supabaseHeaders(session.accessToken),
     cache: "no-store",
   });
@@ -38,7 +40,8 @@ export async function POST(request: Request) {
   const normalizedBooks = books.map(normalizeBookDraft).filter((book): book is NonNullable<ReturnType<typeof normalizeBookDraft>> => Boolean(book));
   if (!normalizedBooks.length) return apiError("At least one book with a title is required", { status: 400 });
 
-  const lookup = await fetch(`${url}/rest/v1/books?select=isbn,title,author&user_id=eq.${session.user.id}`, {
+  const userFilter = supabaseEqFilter(session.user.id);
+  const lookup = await fetch(`${url}/rest/v1/books?select=isbn,title,author&user_id=${userFilter}`, {
     headers: supabaseHeaders(session.accessToken),
     cache: "no-store",
   });

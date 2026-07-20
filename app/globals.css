@@ -289,6 +289,63 @@ h1 {
   justify-content: flex-end;
 }
 
+.library-title-block {
+  max-width: 620px;
+}
+
+.library-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inline-edit-button {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.library-title-editor {
+  display: grid;
+  gap: 11px;
+  width: min(620px, 100%);
+}
+
+.library-title-editor label {
+  display: grid;
+  gap: 6px;
+  color: #767a70;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.library-title-editor input,
+.library-title-editor textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: normal;
+  padding: 12px 14px;
+  resize: vertical;
+  text-transform: none;
+}
+
+.inline-edit-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .receipt-button {
   border: 1px solid #b9b3a7;
   background: var(--card);
