@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { deleteLocalBook, getLocalBooks, updateLocalBook } from "@/lib/local-books";
 import { BOOK_STATUS_LABELS, type Book, type BookStatus } from "@/lib/types";
 
@@ -25,10 +25,10 @@ export function useLibraryBooks() {
       .catch(() => setBooks(getLocalBooks()));
   }, []);
 
-  function showToast(message: string, duration = 2200) {
+  const showToast = useCallback((message: string, duration = 2200) => {
     setToast(message);
     setTimeout(() => setToast(""), duration);
-  }
+  }, []);
 
   async function removeBook(id: string) {
     if (storage === "supabase") {

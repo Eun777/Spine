@@ -29,13 +29,18 @@ SUPABASE_URL=your_supabase_project_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 BOOK_SCAN_ACCESS_CODE=your_private_scan_code
 OPENAI_API_KEY=your_openai_api_key
+NLB_API_KEY=your_nlb_open_web_service_api_key
+NLB_APP_CODE=your_nlb_open_web_service_app_code
 ```
 
 Optional:
 
 ```bash
 GOOGLE_BOOKS_API_KEY=your_google_books_key
+NLB_CATALOGUE_BASE_URL=https://openweb.nlb.gov.sg/api/v2/Catalogue
 ```
+
+`NLB_API_KEY` and `NLB_APP_CODE` must stay server-side in `.env.local`; do not prefix them with `NEXT_PUBLIC_`. The app uses them through `/api/nlb/availability` so credentials are never exposed to the browser.
 
 Run `supabase/schema.sql` for a fresh database. For an existing database, run `supabase/add-book-status.sql` once so every saved book has a valid collection status.
 

@@ -501,6 +501,63 @@ h1 {
   margin-left: auto;
 }
 
+.nlb-availability {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 13px 14px;
+  margin-top: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #5d6257;
+  font-size: 12px;
+}
+
+.nlb-availability.available {
+  border-color: rgba(64, 116, 84, 0.25);
+  background: rgba(64, 116, 84, 0.08);
+}
+
+.nlb-availability.unavailable {
+  border-color: rgba(163, 75, 67, 0.22);
+  background: rgba(163, 75, 67, 0.06);
+}
+
+.nlb-availability.muted {
+  color: #8a8d84;
+}
+
+.nlb-availability-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.nlb-availability ul {
+  display: grid;
+  gap: 7px;
+  list-style: none;
+  margin: 10px 0 8px;
+  padding: 0;
+}
+
+.nlb-availability li {
+  display: grid;
+  gap: 2px;
+}
+
+.nlb-availability small {
+  color: #858a80;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.receipt-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .nlb-link {
   margin-top: 17px;
   display: flex;

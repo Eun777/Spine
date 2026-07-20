@@ -6,6 +6,7 @@ import BookCard from "@/components/book-card";
 import EditBookModal from "@/components/edit-book-modal";
 import WishlistReceiptModal from "@/components/wishlist-receipt-modal";
 import { useLibraryBooks } from "@/hooks/use-library-books";
+import { useNlbAvailability } from "@/hooks/use-nlb-availability";
 import {
   BOOK_STATUSES,
   BOOK_STATUS_LABELS,
@@ -56,6 +57,14 @@ export default function HomePage() {
     });
   }, [books, genre, query, statusFilter]);
 
+  const {
+    availabilityByBookId,
+    loadingBookIds,
+    refreshAllAvailability,
+    canManualRefresh,
+    nextManualRefreshAt,
+  } = useNlbAvailability(shown, showToast);
+
   const wishlist = useMemo(
     () => books.filter((book) => (book.status || "wishlist") === "wishlist"),
     [books]
@@ -87,6 +96,16 @@ export default function HomePage() {
           <p className="lede">Every shelf tells a story. Keep yours close.</p>
         </div>
         <div className="library-summary">
+          {books.length > 0 && (
+            <button
+              className="receipt-button"
+              disabled={!canManualRefresh}
+              title={canManualRefresh ? "Refresh NLB availability" : `Available again at ${new Date(nextManualRefreshAt).toLocaleTimeString("en-SG", { hour: "numeric", minute: "2-digit" })}`}
+              onClick={refreshAllAvailability}
+            >
+              ↻ Refresh NLB
+            </button>
+          )}
           {wishlist.length > 0 && (
             <button className="receipt-button" onClick={() => setShowReceipt(true)}>
               ▤ Share wishlist
@@ -120,6 +139,8 @@ export default function HomePage() {
             <BookCard
               key={book.id}
               book={book}
+              availability={availabilityByBookId[book.id]}
+              isAvailabilityLoading={loadingBookIds.has(book.id)}
               onEdit={() => setEditing(book)}
               onDelete={() => handleDelete(book)}
               onEnrich={() => enrichBook(book)}
