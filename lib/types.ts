@@ -1,5 +1,6 @@
 export const BOOK_STATUSES = ["purchased", "reading", "read", "wishlist"] as const;
 export type BookStatus = typeof BOOK_STATUSES[number];
+export const DEFAULT_BOOK_STATUS: BookStatus = "wishlist";
 
 export const BOOK_STATUS_LABELS: Record<BookStatus, string> = {
   purchased: "Purchased",

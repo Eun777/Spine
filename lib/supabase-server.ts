@@ -3,6 +3,18 @@ import { cookies } from "next/headers";
 export const ACCESS_COOKIE = "spine-sb-access";
 export const REFRESH_COOKIE = "spine-sb-refresh";
 
+type SupabaseSession = {
+  access_token: string;
+  refresh_token?: string;
+  expires_in?: number;
+  user?: SupabaseUser;
+};
+
+export type SupabaseUser = {
+  id: string;
+  email?: string;
+};
+
 export function getSupabaseConfig() {
   return { url: process.env.SUPABASE_URL, key: process.env.SUPABASE_ANON_KEY };
 }
@@ -20,7 +32,7 @@ const cookieOptions = (maxAge: number) => ({
   maxAge,
 });
 
-export function setSessionCookies(session: any) {
+export function setSessionCookies(session: SupabaseSession) {
   const jar = cookies();
   jar.set(ACCESS_COOKIE, session.access_token, cookieOptions(session.expires_in || 3600));
   if (session.refresh_token) jar.set(REFRESH_COOKIE, session.refresh_token, cookieOptions(60 * 60 * 24 * 30));
@@ -33,7 +45,7 @@ export function clearSessionCookies() {
   jar.set("spine-ai-access", "", cookieOptions(0));
 }
 
-async function fetchUser(accessToken: string) {
+async function fetchUser(accessToken: string): Promise<SupabaseUser | null> {
   const { url, key } = getSupabaseConfig();
   if (!url || !key) return null;
   const response = await fetch(`${url}/auth/v1/user`, {
@@ -44,7 +56,7 @@ async function fetchUser(accessToken: string) {
   return response.json();
 }
 
-export async function getAuthenticatedUser(): Promise<{ user: any; accessToken: string } | null> {
+export async function getAuthenticatedUser(): Promise<{ user: SupabaseUser; accessToken: string } | null> {
   const { url, key } = getSupabaseConfig();
   if (!url || !key) return null;
   const jar = cookies();
@@ -66,6 +78,7 @@ export async function getAuthenticatedUser(): Promise<{ user: any; accessToken: 
   const session = await refreshed.json();
   setSessionCookies(session);
   accessToken = session.access_token;
+  if (!session.user?.id || !session.access_token) return null;
   return { user: session.user, accessToken: session.access_token as string };
 }
 

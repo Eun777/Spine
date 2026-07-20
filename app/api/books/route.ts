@@ -1,57 +1,82 @@
 import { NextResponse } from "next/server";
+import { apiError, readJson, readSupabaseError } from "@/lib/api-response";
+import { isDuplicateBook, normalizeBookDraft } from "@/lib/book-utils";
 import { getAuthenticatedUser, getSupabaseConfig, supabaseHeaders } from "@/lib/supabase-server";
-import { BOOK_STATUSES, type BookStatus } from "@/lib/types";
-
-const validStatus = (value: unknown): value is BookStatus => BOOK_STATUSES.includes(value as BookStatus);
-const clean = (value: string) => String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-
-async function supabaseError(response: Response, fallback: string) {
-  const body = await response.json().catch(()=>({}));
-  console.error(fallback, { status: response.status, code: body.code, message: body.message });
-  return body.message || fallback;
-}
 
 export async function GET() {
   const { url, key } = getSupabaseConfig();
   if (!url || !key) return NextResponse.json({ books: [], storage: "local" });
+
   const session = await getAuthenticatedUser();
-  if (!session) return NextResponse.json({ error: "Your session has expired. Please sign in again." }, { status: 401 });
-  const response = await fetch(`${url}/rest/v1/books?select=*&user_id=eq.${session.user.id}&order=created_at.desc`, { headers: supabaseHeaders(session.accessToken), cache: "no-store" });
-  if (!response.ok) return NextResponse.json({ error: await supabaseError(response, "Could not load books") }, { status: 502 });
+  if (!session) return apiError("Your session has expired. Please sign in again.", { status: 401 });
+
+  const response = await fetch(`${url}/rest/v1/books?select=*&user_id=eq.${session.user.id}&order=created_at.desc`, {
+    headers: supabaseHeaders(session.accessToken),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const error = await readSupabaseError(response, "Could not load books");
+    return apiError(error.message, { status: 502, cause: error });
+  }
+
   return NextResponse.json({ books: await response.json(), storage: "supabase" });
 }
 
 export async function POST(request: Request) {
   const { url, key } = getSupabaseConfig();
   if (!url || !key) return NextResponse.json({ storage: "local" });
+
   const session = await getAuthenticatedUser();
-  if (!session) return NextResponse.json({ error: "Your session has expired. Please sign in again." }, { status: 401 });
-  const { books } = await request.json();
-  if (!Array.isArray(books)) return NextResponse.json({ error: "Books must be an array" }, { status: 400 });
+  if (!session) return apiError("Your session has expired. Please sign in again.", { status: 401 });
 
-  const lookup = await fetch(`${url}/rest/v1/books?select=isbn,title,author&user_id=eq.${session.user.id}`, { headers: supabaseHeaders(session.accessToken), cache: "no-store" });
-  if (!lookup.ok) return NextResponse.json({ error: await supabaseError(lookup, "Could not check existing books") }, { status: 502 });
+  const body = await readJson(request);
+  const books = body && typeof body === "object" && "books" in body ? (body as { books?: unknown }).books : null;
+  if (!Array.isArray(books)) return apiError("Books must be an array", { status: 400 });
+  if (books.length > 50) return apiError("Save up to 50 books at a time", { status: 400 });
+
+  const normalizedBooks = books.map(normalizeBookDraft).filter((book): book is NonNullable<ReturnType<typeof normalizeBookDraft>> => Boolean(book));
+  if (!normalizedBooks.length) return apiError("At least one book with a title is required", { status: 400 });
+
+  const lookup = await fetch(`${url}/rest/v1/books?select=isbn,title,author&user_id=eq.${session.user.id}`, {
+    headers: supabaseHeaders(session.accessToken),
+    cache: "no-store",
+  });
+
+  if (!lookup.ok) {
+    const error = await readSupabaseError(lookup, "Could not check existing books");
+    return apiError(error.message, { status: 502, cause: error });
+  }
+
   const existing = await lookup.json();
-  if (!Array.isArray(existing)) return NextResponse.json({ error: "Supabase returned an invalid duplicate-check response" }, { status: 502 });
+  if (!Array.isArray(existing)) return apiError("Supabase returned an invalid duplicate-check response", { status: 502 });
 
-  const unique = books.filter((book:any) => !existing.some((saved:any) =>
-    book.isbn && saved.isbn
-      ? clean(book.isbn) === clean(saved.isbn)
-      : clean(book.title) === clean(saved.title) && clean(book.author) === clean(saved.author)
-  )).map((book:any) => ({
-    ...book,
-    status: validStatus(book.status) ? book.status : "wishlist",
-    id: crypto.randomUUID(),
-    user_id: session.user.id,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }));
+  const now = new Date().toISOString();
+  const unique = normalizedBooks
+    .filter((book) => !existing.some((saved: any) => isDuplicateBook(book, saved)))
+    .map((book) => ({
+      ...book,
+      id: crypto.randomUUID(),
+      user_id: session.user.id,
+      created_at: now,
+      updated_at: now,
+    }));
 
-  let inserted:any[] = [];
+  let inserted: unknown[] = [];
   if (unique.length) {
-    const response = await fetch(`${url}/rest/v1/books`, { method: "POST", headers: { ...supabaseHeaders(session.accessToken), Prefer: "return=representation" }, body: JSON.stringify(unique) });
-    if (!response.ok) return NextResponse.json({ error: await supabaseError(response, "Could not save books") }, { status: 502 });
+    const response = await fetch(`${url}/rest/v1/books`, {
+      method: "POST",
+      headers: { ...supabaseHeaders(session.accessToken), Prefer: "return=representation" },
+      body: JSON.stringify(unique),
+    });
+
+    if (!response.ok) {
+      const error = await readSupabaseError(response, "Could not save books");
+      return apiError(error.message, { status: 502, cause: error });
+    }
+
     inserted = await response.json();
   }
-  return NextResponse.json({ books: inserted, skipped: books.length - unique.length, storage: "supabase" });
+
+  return NextResponse.json({ books: inserted, skipped: normalizedBooks.length - unique.length, storage: "supabase" });
 }

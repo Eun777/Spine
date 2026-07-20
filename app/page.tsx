@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { nlbSearchUrl } from "@/lib/book-utils";
 import { deleteLocalBook, getLocalBooks, updateLocalBook } from "@/lib/local-books";
 import { BOOK_STATUSES, BOOK_STATUS_LABELS, type Book, type BookStatus } from "@/lib/types";
 
@@ -30,7 +31,7 @@ function makeReceiptImage(books:Book[],owner:string):Promise<Blob>{
 }
 
 function BookCard({book,onEdit,onDelete,onEnrich,onStatusChange}:{book:Book;onEdit:()=>void;onDelete:()=>void;onEnrich:()=>void;onStatusChange:(status:BookStatus)=>void}) {
-  const nlbUrl=`https://search.nlb.gov.sg/onesearch/Search?${new URLSearchParams({query:`${book.title} ${book.author}`.trim(),cont:"book"})}`;
+  const nlbUrl=nlbSearchUrl(book);
   const facts=[book.published_date,book.page_count?`${book.page_count} pages`:null,book.language?.toUpperCase()].filter(Boolean);
   return <article className={`book-card ${book.cover_image_url?"has-cover":""}`}>
     <div className="card-labels"><span className="genre">{book.genre||book.categories?.[0]||"Unclassified"}</span><label className={`status-control status-${book.status||"wishlist"}`}><span className="sr-only">Reading status</span><select aria-label={`Status for ${book.title}`} value={book.status||"wishlist"} onChange={e=>onStatusChange(e.target.value as BookStatus)}>{BOOK_STATUSES.map(status=><option value={status} key={status}>{BOOK_STATUS_LABELS[status]}</option>)}</select></label></div>
