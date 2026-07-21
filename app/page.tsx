@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import BookCard from "@/components/book-card";
+import BookRowList from "@/components/book-row-list";
 import EditBookModal from "@/components/edit-book-modal";
 import LibraryTitleEditor from "@/components/library-title-editor";
 import WishlistReceiptModal from "@/components/wishlist-receipt-modal";
@@ -27,6 +28,7 @@ export default function HomePage() {
     saveBookEdit,
     enrichBook,
     changeStatus,
+    reorderBooks,
   } = useLibraryBooks();
   const {
     preferences,
@@ -39,6 +41,7 @@ export default function HomePage() {
   const [editing, setEditing] = useState<Book | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptName, setReceiptName] = useState("");
+  const [viewMode, setViewMode] = useState<"catalogue" | "row">("catalogue");
 
   const genres = useMemo(
     () => [
@@ -94,6 +97,23 @@ export default function HomePage() {
     setStatusFilter(ALL_STATUSES);
   }
 
+  async function moveShownBook(fromIndex: number, toIndex: number) {
+    if (toIndex < 0 || toIndex >= shown.length) return;
+
+    const reorderedShown = [...shown];
+    const [movedBook] = reorderedShown.splice(fromIndex, 1);
+    reorderedShown.splice(toIndex, 0, movedBook);
+
+    const visibleIds = new Set(shown.map((book) => book.id));
+    let nextVisibleIndex = 0;
+    const nextBooks = books.map((book) => {
+      if (!visibleIds.has(book.id)) return book;
+      return reorderedShown[nextVisibleIndex++];
+    });
+
+    await reorderBooks(nextBooks);
+  }
+
   return (
     <section className="shell">
       <div className="library-head">
@@ -103,6 +123,14 @@ export default function HomePage() {
           onSave={savePreferences}
         />
         <div className="library-summary">
+          {books.length > 0 && (
+            <button
+              className="receipt-button"
+              onClick={() => setViewMode((current) => current === "catalogue" ? "row" : "catalogue")}
+            >
+              {viewMode === "catalogue" ? "☰ Row view" : "▦ Catalogue view"}
+            </button>
+          )}
           {books.length > 0 && (
             <button
               className="receipt-button"
@@ -140,6 +168,8 @@ export default function HomePage() {
         <EmptyLibrary />
       ) : shown.length === 0 ? (
         <NoResults onClear={clearFilters} />
+      ) : viewMode === "row" ? (
+        <BookRowList books={shown} onMove={moveShownBook} />
       ) : (
         <div className="book-grid">
           {shown.map((book) => (

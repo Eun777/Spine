@@ -51,10 +51,12 @@ Run `supabase/schema.sql` for a fresh database. For an existing database, run th
 supabase/add-book-status.sql
 supabase/add-library-preferences.sql
 supabase/add-ai-usage-events.sql
+supabase/add-book-sort-order.sql
 ```
 
 `add-book-status.sql` ensures every saved book has a valid collection status. `add-library-preferences.sql` lets each signed-in user customize their library title and subtitle across devices.
 `add-ai-usage-events.sql` enables database-backed AI scan rate limiting. Keep `SUPABASE_SERVICE_ROLE_KEY` server-side only; never prefix it with `NEXT_PUBLIC_`.
+`add-book-sort-order.sql` lets users reorder their library and keeps that order across catalogue and row views.
 
 ## Engineering notes
 

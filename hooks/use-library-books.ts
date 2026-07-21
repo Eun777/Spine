@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { deleteLocalBook, getLocalBooks, updateLocalBook } from "@/lib/local-books";
+import { compareBooksByOrder, deleteLocalBook, getLocalBooks, reorderLocalBooks, updateLocalBook } from "@/lib/local-books";
 import { BOOK_STATUS_LABELS, type Book, type BookStatus } from "@/lib/types";
 
 type StorageMode = "local" | "supabase";
@@ -17,7 +17,7 @@ export function useLibraryBooks() {
       .then((data) => {
         if (data.storage === "supabase") {
           setStorage("supabase");
-          setBooks(data.books);
+          setBooks((data.books || []).sort(compareBooksByOrder));
         } else {
           setBooks(getLocalBooks());
         }
@@ -130,6 +130,30 @@ export function useLibraryBooks() {
     }
   }
 
+  async function reorderBooks(nextBooks: Book[]) {
+    const ordered = nextBooks.map((book, index) => ({ ...book, sort_order: index + 1 }));
+    const previous = books;
+    setBooks(ordered);
+
+    try {
+      if (storage === "supabase") {
+        const response = await fetch("/api/books/reorder", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderedIds: ordered.map((book) => book.id) }),
+        });
+        if (!response.ok) throw new Error("Could not save book order");
+      } else {
+        setBooks(reorderLocalBooks(ordered.map((book) => book.id)));
+      }
+
+      showToast("Book order updated");
+    } catch {
+      setBooks(previous);
+      showToast("Could not update book order");
+    }
+  }
+
   return {
     books,
     toast,
@@ -138,5 +162,6 @@ export function useLibraryBooks() {
     saveBookEdit,
     enrichBook,
     changeStatus,
+    reorderBooks,
   };
 }

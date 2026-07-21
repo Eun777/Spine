@@ -25,6 +25,7 @@ create table if not exists public.books (
   ratings_count integer,
   metadata_source text,
   status text not null default 'wishlist',
+  sort_order integer,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -43,11 +44,22 @@ alter table public.books add column if not exists average_rating double precisio
 alter table public.books add column if not exists ratings_count integer;
 alter table public.books add column if not exists metadata_source text;
 alter table public.books add column if not exists status text not null default 'wishlist';
+alter table public.books add column if not exists sort_order integer;
 alter table public.books alter column status set default 'wishlist';
 update public.books set status = 'wishlist' where status is null or status = 'purchased';
+with ranked_books as (
+  select id, row_number() over (partition by user_id order by created_at desc) as position
+  from public.books
+  where sort_order is null
+)
+update public.books
+set sort_order = ranked_books.position
+from ranked_books
+where public.books.id = ranked_books.id;
 alter table public.books drop constraint if exists books_status_check;
 alter table public.books add constraint books_status_check check (status in ('purchased', 'reading', 'read', 'wishlist'));
 create index if not exists books_user_id_idx on public.books(user_id);
+create index if not exists books_user_sort_order_idx on public.books(user_id, sort_order);
 
 alter table public.books enable row level security;
 

@@ -67,6 +67,7 @@ export function normalizeBook(input: unknown): Book | null {
   return {
     ...draft,
     id: String(book.id),
+    sort_order: typeof book.sort_order === "number" ? book.sort_order : null,
     created_at: String(book.created_at),
     updated_at: String(book.updated_at),
   };

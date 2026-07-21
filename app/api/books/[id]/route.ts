@@ -26,6 +26,7 @@ const MUTABLE_BOOK_FIELDS = [
   "ratings_count",
   "metadata_source",
   "status",
+  "sort_order",
 ] as const;
 
 export async function DELETE(_: Request, { params }: RouteContext) {

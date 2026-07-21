@@ -33,6 +33,7 @@ export type BookDraft = {
 
 export type Book = BookDraft & {
   id: string;
+  sort_order?: number | null;
   created_at: string;
   updated_at: string;
 };

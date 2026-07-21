@@ -12,7 +12,7 @@ export async function GET() {
   if (!session) return apiError("Your session has expired. Please sign in again.", { status: 401 });
 
   const userFilter = supabaseEqFilter(session.user.id);
-  const response = await fetch(`${url}/rest/v1/books?select=*&user_id=${userFilter}&order=created_at.desc`, {
+  const response = await fetch(`${url}/rest/v1/books?select=*&user_id=${userFilter}&order=sort_order.asc.nullslast,created_at.desc`, {
     headers: supabaseHeaders(session.accessToken),
     cache: "no-store",
   });
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   if (!normalizedBooks.length) return apiError("At least one book with a title is required", { status: 400 });
 
   const userFilter = supabaseEqFilter(session.user.id);
-  const lookup = await fetch(`${url}/rest/v1/books?select=isbn,title,author&user_id=${userFilter}`, {
+  const lookup = await fetch(`${url}/rest/v1/books?select=isbn,title,author,sort_order&user_id=${userFilter}`, {
     headers: supabaseHeaders(session.accessToken),
     cache: "no-store",
   });
@@ -55,12 +55,13 @@ export async function POST(request: Request) {
   if (!Array.isArray(existing)) return apiError("Supabase returned an invalid duplicate-check response", { status: 502 });
 
   const now = new Date().toISOString();
-  const unique = normalizedBooks
-    .filter((book) => !existing.some((saved: any) => isDuplicateBook(book, saved)))
-    .map((book) => ({
+  const minSortOrder = Math.min(0, ...existing.map((book: any) => typeof book.sort_order === "number" ? book.sort_order : 0));
+  const uniqueDrafts = normalizedBooks.filter((book) => !existing.some((saved: any) => isDuplicateBook(book, saved)));
+  const unique = uniqueDrafts.map((book, index) => ({
       ...book,
       id: crypto.randomUUID(),
       user_id: session.user.id,
+      sort_order: minSortOrder - uniqueDrafts.length + index,
       created_at: now,
       updated_at: now,
     }));
